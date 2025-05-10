@@ -1,5 +1,7 @@
 import unittest
 from inline_markdown import (
+    extract_markdown_images,
+    extract_markdown_links,
     split_nodes_delimiter,
 )
 
@@ -85,6 +87,35 @@ class TestInlineMarkdown(unittest.TestCase):
             ],
             new_nodes,
         )
+
+    def test_extract_markdown_images(self):
+        matches = extract_markdown_images(
+            "This is text with an ![image](https://i.imgur.com/zjjcJKZ.png)"
+        )
+        self.assertListEqual([("image", "https://i.imgur.com/zjjcJKZ.png")], matches)
+
+    def test_extract_multiple_images(self):
+        text = "Multiple images: ![first](https://example.com/1.jpg) and ![second](https://example.com/2.jpg)"
+        expected = [("first", "https://example.com/1.jpg"), ("second", "https://example.com/2.jpg")]
+        self.assertListEqual(extract_markdown_images(text), expected)
+
+    def test_extract_no_images(self):
+        text = "No images here, just [a link](https://example.com)"
+        self.assertListEqual(extract_markdown_images(text), [])
+    
+    def test_extract_single_link(self):
+        text = "This is text with a [link](https://example.com)"
+        expected = [("link", "https://example.com")]
+        self.assertListEqual(extract_markdown_links(text), expected)
+    
+    def test_extract_multiple_links(self):
+        text = "Multiple links: [first](https://example.com/1) and [second](https://example.com/2)"
+        expected = [("first", "https://example.com/1"), ("second", "https://example.com/2")]
+        self.assertListEqual(extract_markdown_links(text), expected)
+
+    def test_extract_no_links(self):
+        text = "No links here, just ![an image](https://example.com/img.png)"
+        self.assertListEqual(extract_markdown_links(text), [])
 
 
 if __name__ == "__main__":
