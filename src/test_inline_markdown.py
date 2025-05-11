@@ -5,6 +5,7 @@ from inline_markdown import (
     split_nodes_link,
     extract_markdown_links,
     extract_markdown_images,
+    text_to_textnodes,
 )
 
 from textnode import TextNode, TextType
@@ -156,6 +157,34 @@ class TestInlineMarkdown(unittest.TestCase):
             ],
             new_nodes,
         )
+
+    def test_plain_text(self):
+        # No markdown → single TEXT node
+        text = "Just a plain sentence."
+        nodes = text_to_textnodes(text)
+        self.assertListEqual(
+            [TextNode(text, TextType.TEXT)],
+            nodes
+        )
+
+
+    def test_links_and_images_together(self):
+        # Link immediately followed by image, and trailing text
+        text = "See [site](https://example.com)![pic](https://img.com/x.png)!"
+        nodes = text_to_textnodes(text)
+        expected = [
+            TextNode("See ", TextType.TEXT),
+            TextNode("site", TextType.LINK, "https://example.com"),
+            TextNode("", TextType.TEXT),  # split leaves empty between ) and ![
+            TextNode("pic", TextType.IMAGE, "https://img.com/x.png"),
+            TextNode("!", TextType.TEXT),
+        ]
+        # Filter out any empty TEXT nodes if you prefer not to include them:
+        nodes = [n for n in nodes if not (n.text == "" and n.text_type == TextType.TEXT)]
+        expected = [n for n in expected if not (n.text == "" and n.text_type == TextType.TEXT)]
+        self.assertListEqual(expected, nodes)
+
+
 
 
 if __name__ == "__main__":
