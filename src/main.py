@@ -1,20 +1,47 @@
 import os
 import shutil
+import logging
 
 from textnode import TextNode, TextType
 
 def main():
-    text_node = TextNode("Test anchor text", TextType.LINK, "https://www.boot.dev")
-    print(text_node)
+    here = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.abspath(os.path.join(here, os.pardir))
 
-def copy_content(source, destination):
-    base_dir = os.path.dirname(os.path.abspath(__file__))  # /ruta/a/proyecto/src
-    public_dir = os.path.join(base_dir, os.pardir, 'public')  # /ruta/a/proyecto/public
-    public_dir = os.path.normpath(public_dir)
+    static_dir = os.path.join(project_root, 'static')
+    public_dir = os.path.join(project_root, 'public')
 
-    if not os.path.exists(destination_path):
-        os.mkdir(destination)
-    if os.path.exists(destination_path):
+    copy_to_public(static_dir, public_dir)
+
+
+
+def copy_to_public(source, destination, logger=None):
+    if logger is None:
+        logger = logging.getLogger("sync")
+        logger.setLevel(logging.INFO)
+        h = logging.StreamHandler()
+        h.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
+        logger.addHandler(h)
+
+    os.makedirs(destination, exist_ok=True)
+
+    for name in os.listdir(destination):
+        path = os.path.join(destination, name)
+        if os.path.isdir(path):
+            shutil.rmtree(path)
+        else:
+            os.remove(path)
+
+    for name in os.listdir(source):
+        src = os.path.join(source, name)
+        dst = os.path.join(destination, name)
+
+        if os.path.isdir(src):
+            copy_to_public(src, dst, logger)
+        else:
+            shutil.copy2(src, dst)
+
+        logger.info(f"Copied: {src} -> {dst}")
         
 
 if __name__ == "__main__":
