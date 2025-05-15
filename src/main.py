@@ -1,48 +1,29 @@
 import os
 import shutil
-import logging
 
-from textnode import TextNode, TextType
+from copystatic import copy_files_recursive
+from gencontent import generate_page
+
+dir_path_static = "./static"
+dir_path_public = "./public"
+dir_path_content = "./content"
+template_path = "./template.html"
+
 
 def main():
-    here = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.abspath(os.path.join(here, os.pardir))
+    print("Deleting public directory...")
+    if os.path.exists(dir_path_public):
+        shutil.rmtree(dir_path_public)
 
-    static_dir = os.path.join(project_root, 'static')
-    public_dir = os.path.join(project_root, 'public')
+    print("Copying static files to public directory...")
+    copy_files_recursive(dir_path_static, dir_path_public)
 
-    copy_to_public(static_dir, public_dir)
+    print("Generating page...")
+    generate_page(
+        os.path.join(dir_path_content, "index.md"),
+        template_path,
+        os.path.join(dir_path_public, "index.html"),
+    )
 
 
-
-def copy_to_public(source, destination, logger=None):
-    if logger is None:
-        logger = logging.getLogger("sync")
-        logger.setLevel(logging.INFO)
-        h = logging.StreamHandler()
-        h.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
-        logger.addHandler(h)
-
-    os.makedirs(destination, exist_ok=True)
-
-    for name in os.listdir(destination):
-        path = os.path.join(destination, name)
-        if os.path.isdir(path):
-            shutil.rmtree(path)
-        else:
-            os.remove(path)
-
-    for name in os.listdir(source):
-        src = os.path.join(source, name)
-        dst = os.path.join(destination, name)
-
-        if os.path.isdir(src):
-            copy_to_public(src, dst, logger)
-        else:
-            shutil.copy2(src, dst)
-
-        logger.info(f"Copied: {src} -> {dst}")
-        
-
-if __name__ == "__main__":
-    main()
+main()
